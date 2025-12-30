@@ -166,7 +166,7 @@ def get_sheet_data(
     file_id: int,
     sheet_id: int,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(50, ge=1, le=50000),
     db: Session = Depends(get_db)
 ):
     """获取Sheet数据（分页）"""
