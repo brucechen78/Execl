@@ -5,11 +5,11 @@
     </el-header>
     <el-main class="app-main">
       <el-row :gutter="20">
-        <el-col :span="10">
+        <el-col :span="8">
           <FileUpload @uploaded="handleUploaded" />
           <FileList ref="fileListRef" @select="handleFileSelect" />
         </el-col>
-        <el-col :span="14">
+        <el-col :span="16">
           <DataTable :file="selectedFile" />
         </el-col>
       </el-row>
@@ -67,7 +67,7 @@ body {
 
 .app-main {
   padding: 20px;
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
 }
 </style>
