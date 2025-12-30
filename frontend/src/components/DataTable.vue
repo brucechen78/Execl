@@ -41,7 +41,7 @@
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-wrapper">
+    <div class="table-wrapper" ref="tableWrapperRef">
       <el-table
         v-loading="loading"
         :data="tableData"
@@ -123,6 +123,7 @@ const currentPage = ref(1)
 const pageSize = ref(100)
 const enablePagination = ref(true)
 const tableHeight = ref(500)
+const tableWrapperRef = ref(null)
 
 const currentSheet = computed(() => {
   return sheets.value.find(s => s.id === currentSheetId.value)
@@ -149,12 +150,17 @@ const tableRowClassName = ({ rowIndex }) => {
 
 // 动态计算表格高度
 const updateTableHeight = () => {
-  // 工具栏 60px + 状态栏 50px + 边距
-  tableHeight.value = window.innerHeight - 120
+  if (tableWrapperRef.value) {
+    tableHeight.value = tableWrapperRef.value.clientHeight
+  } else {
+    // 回退方案：顶部header 52px + 工具栏 52px + 状态栏 42px + 边距
+    tableHeight.value = window.innerHeight - 150
+  }
 }
 
 onMounted(() => {
-  updateTableHeight()
+  // 延迟计算以确保 DOM 已渲染
+  setTimeout(updateTableHeight, 100)
   window.addEventListener('resize', updateTableHeight)
   loadFileDetail()
 })
@@ -249,7 +255,8 @@ const handleDownload = async () => {
 .data-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 52px);
+  flex: 1;
+  overflow: hidden;
   background: #fff;
 }
 
@@ -286,10 +293,13 @@ const handleDownload = async () => {
   flex: 1;
   overflow: hidden;
   padding: 0;
+  min-height: 0;
 }
 
 .custom-table {
   font-size: 13px;
+  width: 100%;
+  height: 100%;
 }
 
 .column-header {
