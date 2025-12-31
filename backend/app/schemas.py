@@ -3,6 +3,60 @@ from typing import List, Optional, Any
 from pydantic import BaseModel
 
 
+class MergedCellInfo(BaseModel):
+    """合并单元格信息"""
+    start_row: int
+    start_col: int
+    end_row: int
+    end_col: int
+
+    class Config:
+        from_attributes = True
+
+
+class ImageInfo(BaseModel):
+    """图片信息"""
+    id: int
+    image_format: str
+    anchor_row: int
+    anchor_col: int
+    width: Optional[int] = None
+    height: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChartInfo(BaseModel):
+    """图表信息"""
+    id: int
+    chart_type: str
+    chart_title: Optional[str] = None
+    chart_data: Optional[dict] = None
+    anchor_row: int
+    anchor_col: int
+    width: Optional[int] = None
+    height: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TableRegionInfo(BaseModel):
+    """表格区域信息"""
+    id: int
+    region_index: int
+    start_row: int
+    start_col: int
+    end_row: int
+    end_col: int
+    header_rows: int
+    table_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class SheetBase(BaseModel):
     """Sheet基础模型"""
     sheet_name: str
@@ -59,6 +113,10 @@ class SheetDataResponse(BaseModel):
     page_size: int
     headers: List[str]
     data: List[List[Any]]
+    merged_cells: List[MergedCellInfo] = []
+    images: List[ImageInfo] = []
+    charts: List[ChartInfo] = []
+    table_regions: List[TableRegionInfo] = []
 
 
 class UploadResponse(BaseModel):

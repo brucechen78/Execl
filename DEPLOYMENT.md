@@ -8,6 +8,7 @@
 - [Docker 部署（推荐）](#docker-部署推荐)
 - [侧载部署](#侧载部署)
 - [本地开发部署](#本地开发部署)
+- [数据库说明](#数据库说明)
 - [常见问题](#常见问题)
 
 ---
@@ -223,6 +224,93 @@ npm run dev
 
 ---
 
+## 数据库说明
+
+系统使用以下数据表存储 Excel 数据：
+
+| 表名 | 说明 |
+|------|------|
+| excel_files | Excel 文件信息（包含原始文件二进制数据） |
+| excel_sheets | Sheet 信息 |
+| excel_data | 单元格数据 |
+| merged_cells | 合并单元格信息 |
+| sheet_images | 内嵌图片数据（MEDIUMBLOB，最大 16MB） |
+| sheet_charts | 内嵌图表信息（JSON 格式存储） |
+| table_regions | 表格区域信息（多表头支持） |
+
+### 从旧版本升级
+
+如果从旧版本升级（不支持合并单元格/图片/图表/多表格的版本），需要重建数据库：
+
+```bash
+# 停止服务并删除数据卷（会清除所有已上传的文件）
+docker-compose down -v
+
+# 重新启动
+docker-compose up -d --build
+```
+
+**注意**：此操作会删除所有已上传的 Excel 文件，请提前备份重要数据。
+
+### 数据库表结构
+
+```sql
+-- 合并单元格表
+CREATE TABLE merged_cells (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    sheet_id INT NOT NULL,
+    start_row INT NOT NULL,
+    start_col INT NOT NULL,
+    end_row INT NOT NULL,
+    end_col INT NOT NULL,
+    FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
+);
+
+-- 图片表
+CREATE TABLE sheet_images (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    sheet_id INT NOT NULL,
+    image_data MEDIUMBLOB NOT NULL,
+    image_format VARCHAR(20) NOT NULL,
+    anchor_type VARCHAR(20) DEFAULT 'oneCellAnchor',
+    anchor_row INT NOT NULL,
+    anchor_col INT NOT NULL,
+    width INT,
+    height INT,
+    FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
+);
+
+-- 图表表
+CREATE TABLE sheet_charts (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    sheet_id INT NOT NULL,
+    chart_type VARCHAR(50) NOT NULL,
+    chart_title VARCHAR(255),
+    chart_data JSON,
+    anchor_row INT NOT NULL,
+    anchor_col INT NOT NULL,
+    width INT,
+    height INT,
+    FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
+);
+
+-- 表格区域表
+CREATE TABLE table_regions (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    sheet_id INT NOT NULL,
+    region_index INT NOT NULL,
+    start_row INT NOT NULL,
+    start_col INT NOT NULL,
+    end_row INT NOT NULL,
+    end_col INT NOT NULL,
+    header_rows INT DEFAULT 1,
+    table_name VARCHAR(255),
+    FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
+);
+```
+
+---
+
 ## 生产环境配置
 
 ### 修改数据库密码
@@ -319,7 +407,19 @@ location /api {
 - 检查文件格式是否为 .xls 或 .xlsx
 - 查看后端日志：`docker-compose logs backend`
 
-### 5. 重置所有数据
+### 5. 合并单元格显示不正确
+
+- 确保使用最新版本的前端代码
+- 清除浏览器缓存后刷新页面
+- 检查后端日志确认解析是否成功
+
+### 6. 图片无法显示
+
+- 确认上传的是 .xlsx 格式文件（.xls 格式暂不支持图片提取）
+- 检查后端日志是否有图片解析错误
+- 通过 API 测试图片接口：`GET /api/images/{image_id}`
+
+### 7. 重置所有数据
 
 ```bash
 docker-compose down -v
@@ -350,3 +450,21 @@ docker exec -it excel-mysql mysql -uroot -ppassword
 # 清理未使用的镜像
 docker image prune
 ```
+
+---
+
+## 功能说明
+
+### 支持的 Excel 特性
+
+| 特性 | .xlsx | .xls |
+|------|-------|------|
+| 单元格数据 | ✅ | ✅ |
+| 合并单元格 | ✅ | ✅ |
+| 内嵌图片 | ✅ | ❌ |
+| 内嵌图表 | ✅ (元信息) | ❌ |
+| 多表格区域 | ✅ | ✅ |
+
+### 多表格区域检测
+
+系统通过识别 Sheet 中的空行来自动分割多个表格区域。当一个 Sheet 中存在多个通过空行分隔的数据块时，会自动识别为多个表格区域，用户可以在前端切换查看。

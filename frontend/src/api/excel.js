@@ -36,6 +36,11 @@ export const getSheetData = (fileId, sheetId, page = 1, pageSize = 50) => {
   })
 }
 
+// 获取图片URL
+export const getImageUrl = (imageId) => {
+  return `/api/images/${imageId}`
+}
+
 // 下载文件
 export const downloadFile = (fileId, filename) => {
   return api.get(`/files/${fileId}/download`, {

@@ -16,6 +16,25 @@
             :value="sheet.id"
           />
         </el-select>
+        <!-- 多表格区域选择器 -->
+        <el-select
+          v-if="tableRegions.length > 0"
+          v-model="currentRegionIndex"
+          placeholder="选择表格区域"
+          @change="handleRegionChange"
+          style="margin-left: 10px; width: 180px;"
+        >
+          <el-option
+            :value="-1"
+            label="全部数据"
+          />
+          <el-option
+            v-for="region in tableRegions"
+            :key="region.region_index"
+            :label="region.table_name || `表格 ${region.region_index + 1}`"
+            :value="region.region_index"
+          />
+        </el-select>
       </div>
       <div class="toolbar-right">
         <el-switch
@@ -40,44 +59,101 @@
       </div>
     </div>
 
-    <!-- 数据表格 -->
-    <div class="table-wrapper" ref="tableWrapperRef">
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        border
-        stripe
-        :height="tableHeight"
-        :row-class-name="tableRowClassName"
-        class="custom-table"
-      >
-        <el-table-column type="index" label="#" width="70" fixed="left" align="center" />
-        <el-table-column
-          v-for="(header, index) in headers"
-          :key="index"
-          :prop="String(index)"
-          :label="header"
-          min-width="150"
-          show-overflow-tooltip
-        >
-          <template #header>
-            <div class="column-header">
-              <span class="column-title">{{ header }}</span>
-              <span class="column-index">{{ getColumnLetter(index) }}</span>
+    <!-- 图片和图表展示区域 -->
+    <div v-if="images.length > 0 || charts.length > 0" class="media-section">
+      <el-collapse v-model="activeMedia">
+        <el-collapse-item v-if="images.length > 0" title="内嵌图片" name="images">
+          <div class="media-grid">
+            <div
+              v-for="img in images"
+              :key="img.id"
+              class="media-item"
+              @click="showImagePreview(img)"
+            >
+              <el-image
+                :src="getImageUrl(img.id)"
+                fit="contain"
+                class="thumbnail"
+              >
+                <template #error>
+                  <div class="image-error">
+                    <el-icon><Picture /></el-icon>
+                  </div>
+                </template>
+              </el-image>
+              <div class="media-info">位置: {{ getColumnLetter(img.anchor_col) }}{{ img.anchor_row + 1 }}</div>
             </div>
-          </template>
-        </el-table-column>
-      </el-table>
+          </div>
+        </el-collapse-item>
+        <el-collapse-item v-if="charts.length > 0" title="内嵌图表" name="charts">
+          <div class="charts-list">
+            <el-tag
+              v-for="chart in charts"
+              :key="chart.id"
+              type="info"
+              class="chart-tag"
+            >
+              <el-icon><DataLine /></el-icon>
+              {{ chart.chart_title || getChartTypeName(chart.chart_type) }}
+              ({{ getColumnLetter(chart.anchor_col) }}{{ chart.anchor_row + 1 }})
+            </el-tag>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-wrapper" ref="tableWrapperRef" v-loading="loading">
+      <div class="table-container" :style="{ maxHeight: tableHeight + 'px' }">
+        <table class="excel-table">
+          <thead>
+            <tr>
+              <th class="row-index-header">#</th>
+              <th
+                v-for="(header, index) in displayHeaders"
+                :key="index"
+                class="column-header"
+              >
+                <div class="header-content">
+                  <span class="header-title">{{ header }}</span>
+                  <span class="header-index">{{ getColumnLetter(index) }}</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, rowIdx) in displayData" :key="rowIdx" :class="rowIdx % 2 === 0 ? 'even-row' : 'odd-row'">
+              <td class="row-index-cell">{{ getActualRowNumber(rowIdx) }}</td>
+              <template v-for="(cell, colIdx) in row" :key="colIdx">
+                <td
+                  v-if="!isCellHidden(rowIdx, colIdx)"
+                  :colspan="getCellColspan(rowIdx, colIdx)"
+                  :rowspan="getCellRowspan(rowIdx, colIdx)"
+                  :class="{ 'merged-cell': isMergedCell(rowIdx, colIdx) }"
+                >
+                  {{ cell }}
+                </td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 底部状态栏 -->
     <div class="statusbar">
       <div class="status-left">
         <el-tag type="info" effect="plain">
-          {{ totalRows }} 行 × {{ headers.length }} 列
+          {{ totalRows }} 行 × {{ displayHeaders.length }} 列
         </el-tag>
         <el-tag v-if="currentSheet" type="success" effect="plain" style="margin-left: 10px;">
           {{ currentSheet.sheet_name }}
+        </el-tag>
+        <el-tag v-if="mergedCells.length > 0" type="warning" effect="plain" style="margin-left: 10px;">
+          {{ mergedCells.length }} 个合并单元格
+        </el-tag>
+        <el-tag v-if="tableRegions.length > 0" type="primary" effect="plain" style="margin-left: 10px;">
+          {{ tableRegions.length }} 个表格区域
         </el-tag>
       </div>
       <div class="status-right">
@@ -95,14 +171,21 @@
         </span>
       </div>
     </div>
+
+    <!-- 图片预览对话框 -->
+    <el-dialog v-model="imagePreviewVisible" title="图片预览" width="80%">
+      <div class="image-preview-container">
+        <img :src="previewImageUrl" class="preview-image" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-import { ArrowLeft, Download } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Picture, DataLine } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getFileDetail, getSheetData, downloadFile } from '../api/excel'
+import { getFileDetail, getSheetData, downloadFile, getImageUrl } from '../api/excel'
 
 const props = defineProps({
   file: {
@@ -125,8 +208,39 @@ const enablePagination = ref(true)
 const tableHeight = ref(500)
 const tableWrapperRef = ref(null)
 
+// 新增状态
+const mergedCells = ref([])
+const images = ref([])
+const charts = ref([])
+const tableRegions = ref([])
+const currentRegionIndex = ref(-1)  // -1 表示显示全部
+const activeMedia = ref([])
+const imagePreviewVisible = ref(false)
+const previewImageUrl = ref('')
+
 const currentSheet = computed(() => {
   return sheets.value.find(s => s.id === currentSheetId.value)
+})
+
+// 根据当前选择的表格区域计算显示的数据
+const displayData = computed(() => {
+  if (currentRegionIndex.value === -1 || tableRegions.value.length === 0) {
+    return tableData.value
+  }
+  const region = tableRegions.value.find(r => r.region_index === currentRegionIndex.value)
+  if (!region) return tableData.value
+
+  // 过滤出当前区域的数据
+  const startRow = region.start_row
+  const endRow = region.end_row
+  return tableData.value.filter((_, idx) => {
+    const actualRow = (currentPage.value - 1) * pageSize.value + idx
+    return actualRow >= startRow && actualRow <= endRow
+  })
+})
+
+const displayHeaders = computed(() => {
+  return headers.value
 })
 
 // 列索引转Excel列名 (A, B, C, ..., Z, AA, AB, ...)
@@ -140,12 +254,75 @@ const getColumnLetter = (index) => {
   return result
 }
 
-// 行样式
-const tableRowClassName = ({ rowIndex }) => {
-  if (rowIndex % 2 === 0) {
-    return 'even-row'
+// 获取实际行号
+const getActualRowNumber = (rowIdx) => {
+  if (currentRegionIndex.value === -1 || tableRegions.value.length === 0) {
+    return (currentPage.value - 1) * pageSize.value + rowIdx + 1
   }
-  return 'odd-row'
+  const region = tableRegions.value.find(r => r.region_index === currentRegionIndex.value)
+  if (!region) return rowIdx + 1
+  return region.start_row + rowIdx + 1
+}
+
+// 检查单元格是否是合并单元格的起始位置
+const isMergedCell = (rowIdx, colIdx) => {
+  const actualRow = (currentPage.value - 1) * pageSize.value + rowIdx
+  return mergedCells.value.some(mc =>
+    mc.start_row === actualRow && mc.start_col === colIdx
+  )
+}
+
+// 检查单元格是否应该被隐藏（被合并到其他单元格）
+const isCellHidden = (rowIdx, colIdx) => {
+  const actualRow = (currentPage.value - 1) * pageSize.value + rowIdx
+  return mergedCells.value.some(mc =>
+    actualRow >= mc.start_row && actualRow <= mc.end_row &&
+    colIdx >= mc.start_col && colIdx <= mc.end_col &&
+    !(actualRow === mc.start_row && colIdx === mc.start_col)
+  )
+}
+
+// 获取单元格的colspan
+const getCellColspan = (rowIdx, colIdx) => {
+  const actualRow = (currentPage.value - 1) * pageSize.value + rowIdx
+  const merged = mergedCells.value.find(mc =>
+    mc.start_row === actualRow && mc.start_col === colIdx
+  )
+  return merged ? merged.end_col - merged.start_col + 1 : 1
+}
+
+// 获取单元格的rowspan
+const getCellRowspan = (rowIdx, colIdx) => {
+  const actualRow = (currentPage.value - 1) * pageSize.value + rowIdx
+  const merged = mergedCells.value.find(mc =>
+    mc.start_row === actualRow && mc.start_col === colIdx
+  )
+  return merged ? merged.end_row - merged.start_row + 1 : 1
+}
+
+// 图表类型名称映射
+const getChartTypeName = (type) => {
+  const typeMap = {
+    'bar': '柱状图',
+    'bar3d': '3D柱状图',
+    'line': '折线图',
+    'line3d': '3D折线图',
+    'pie': '饼图',
+    'pie3d': '3D饼图',
+    'area': '面积图',
+    'scatter': '散点图',
+    'radar': '雷达图',
+    'doughnut': '环形图',
+    'bubble': '气泡图',
+    'unknown': '图表'
+  }
+  return typeMap[type] || '图表'
+}
+
+// 显示图片预览
+const showImagePreview = (img) => {
+  previewImageUrl.value = getImageUrl(img.id)
+  imagePreviewVisible.value = true
 }
 
 // 动态计算表格高度
@@ -153,13 +330,11 @@ const updateTableHeight = () => {
   if (tableWrapperRef.value) {
     tableHeight.value = tableWrapperRef.value.clientHeight
   } else {
-    // 回退方案：顶部header 52px + 工具栏 52px + 状态栏 42px + 边距
-    tableHeight.value = window.innerHeight - 150
+    tableHeight.value = window.innerHeight - 200
   }
 }
 
 onMounted(() => {
-  // 延迟计算以确保 DOM 已渲染
   setTimeout(updateTableHeight, 100)
   window.addEventListener('resize', updateTableHeight)
   loadFileDetail()
@@ -202,14 +377,19 @@ const loadSheetData = async () => {
       actualPageSize
     )
     headers.value = response.data.headers
-    tableData.value = response.data.data.map((row, rowIndex) => {
-      const rowObj = { _rowIndex: rowIndex }
-      row.forEach((cell, colIndex) => {
-        rowObj[String(colIndex)] = cell
-      })
-      return rowObj
-    })
+    tableData.value = response.data.data
     totalRows.value = response.data.total_rows - 1
+
+    // 加载新增的数据
+    mergedCells.value = response.data.merged_cells || []
+    images.value = response.data.images || []
+    charts.value = response.data.charts || []
+    tableRegions.value = response.data.table_regions || []
+
+    // 如果有多个表格区域，默认显示全部
+    if (tableRegions.value.length > 0) {
+      currentRegionIndex.value = -1
+    }
   } catch (error) {
     ElMessage.error('获取数据失败')
   } finally {
@@ -223,7 +403,12 @@ const handleBack = () => {
 
 const handleSheetChange = () => {
   currentPage.value = 1
+  currentRegionIndex.value = -1
   loadSheetData()
+}
+
+const handleRegionChange = () => {
+  // 表格区域切换不需要重新加载数据，只需要过滤显示
 }
 
 const handlePageChange = (page) => {
@@ -288,6 +473,63 @@ const handleDownload = async () => {
   white-space: nowrap;
 }
 
+/* 媒体展示区域 */
+.media-section {
+  padding: 10px 20px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+  flex-shrink: 0;
+}
+
+.media-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.media-item {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.media-item:hover {
+  transform: scale(1.05);
+}
+
+.thumbnail {
+  width: 100px;
+  height: 80px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+}
+
+.image-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
+  color: #909399;
+}
+
+.media-info {
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.charts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chart-tag {
+  cursor: default;
+}
+
 /* 表格区域 */
 .table-wrapper {
   flex: 1;
@@ -296,28 +538,89 @@ const handleDownload = async () => {
   min-height: 0;
 }
 
-.custom-table {
-  font-size: 13px;
+.table-container {
+  overflow: auto;
   width: 100%;
   height: 100%;
 }
 
+.excel-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: max-content;
+  min-width: 100%;
+}
+
+.excel-table th,
+.excel-table td {
+  border: 1px solid #e8e8e8;
+  padding: 8px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.excel-table th {
+  background-color: #f0f2f5;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.row-index-header,
+.row-index-cell {
+  background-color: #f5f7fa !important;
+  color: #909399;
+  font-size: 12px;
+  text-align: center;
+  width: 60px;
+  min-width: 60px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.row-index-header {
+  z-index: 15;
+}
+
 .column-header {
+  min-width: 120px;
+}
+
+.header-content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   line-height: 1.3;
 }
 
-.column-title {
+.header-title {
   font-weight: 600;
   color: #303133;
 }
 
-.column-index {
+.header-index {
   font-size: 11px;
   color: #909399;
   font-weight: normal;
+}
+
+.even-row td {
+  background-color: #ffffff;
+}
+
+.odd-row td {
+  background-color: #fafbfc;
+}
+
+.excel-table tr:hover td {
+  background-color: #ecf5ff !important;
+}
+
+.merged-cell {
+  background-color: #fff8e6 !important;
+  font-weight: 500;
 }
 
 /* 状态栏 */
@@ -342,47 +645,18 @@ const handleDownload = async () => {
   font-size: 13px;
 }
 
-/* 表格行样式 */
-:deep(.el-table) {
-  --el-table-border-color: #e8e8e8;
+/* 图片预览 */
+.image-preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 70vh;
+  overflow: auto;
 }
 
-:deep(.el-table th.el-table__cell) {
-  background-color: #f0f2f5 !important;
-  color: #303133;
-  font-weight: 600;
-  border-right: 1px solid #e0e0e0;
-}
-
-:deep(.el-table .even-row) {
-  background-color: #ffffff;
-}
-
-:deep(.el-table .odd-row) {
-  background-color: #fafbfc;
-}
-
-:deep(.el-table .el-table__row:hover > td) {
-  background-color: #ecf5ff !important;
-}
-
-:deep(.el-table td.el-table__cell) {
-  border-right: 1px solid #ebeef5;
-  padding: 8px 0;
-}
-
-:deep(.el-table .cell) {
-  padding: 0 12px;
-}
-
-/* 行号列样式 */
-:deep(.el-table__fixed-left .el-table__cell) {
-  background-color: #f5f7fa !important;
-}
-
-:deep(.el-table__body .el-table__row .el-table__cell:first-child) {
-  background-color: #f5f7fa;
-  color: #909399;
-  font-size: 12px;
+.preview-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
 }
 </style>

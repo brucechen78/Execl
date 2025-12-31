@@ -122,3 +122,141 @@ def delete_file(db: Session, file_id: int) -> bool:
         db.commit()
         return True
     return False
+
+
+def bulk_create_merged_cells(
+    db: Session,
+    sheet_id: int,
+    merged_cells: List[Tuple[int, int, int, int]]
+) -> None:
+    """批量创建合并单元格记录"""
+    if not merged_cells:
+        return
+    db_merged_list = [
+        models.MergedCell(
+            sheet_id=sheet_id,
+            start_row=start_row,
+            start_col=start_col,
+            end_row=end_row,
+            end_col=end_col
+        )
+        for start_row, start_col, end_row, end_col in merged_cells
+    ]
+    db.bulk_save_objects(db_merged_list)
+    db.commit()
+
+
+def create_sheet_image(
+    db: Session,
+    sheet_id: int,
+    image_data: bytes,
+    image_format: str,
+    anchor_row: int,
+    anchor_col: int,
+    width: int = None,
+    height: int = None,
+    anchor_type: str = "oneCellAnchor"
+) -> models.SheetImage:
+    """创建图片记录"""
+    db_image = models.SheetImage(
+        sheet_id=sheet_id,
+        image_data=image_data,
+        image_format=image_format,
+        anchor_type=anchor_type,
+        anchor_row=anchor_row,
+        anchor_col=anchor_col,
+        width=width,
+        height=height
+    )
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
+
+
+def create_sheet_chart(
+    db: Session,
+    sheet_id: int,
+    chart_type: str,
+    anchor_row: int,
+    anchor_col: int,
+    chart_title: str = None,
+    chart_data: dict = None,
+    width: int = None,
+    height: int = None
+) -> models.SheetChart:
+    """创建图表记录"""
+    db_chart = models.SheetChart(
+        sheet_id=sheet_id,
+        chart_type=chart_type,
+        chart_title=chart_title,
+        chart_data=chart_data,
+        anchor_row=anchor_row,
+        anchor_col=anchor_col,
+        width=width,
+        height=height
+    )
+    db.add(db_chart)
+    db.commit()
+    db.refresh(db_chart)
+    return db_chart
+
+
+def bulk_create_table_regions(
+    db: Session,
+    sheet_id: int,
+    regions: List[Tuple[int, int, int, int, int, int, str]]
+) -> None:
+    """批量创建表格区域记录
+    regions: List of (region_index, start_row, start_col, end_row, end_col, header_rows, table_name)
+    """
+    if not regions:
+        return
+    db_regions = [
+        models.TableRegion(
+            sheet_id=sheet_id,
+            region_index=region_index,
+            start_row=start_row,
+            start_col=start_col,
+            end_row=end_row,
+            end_col=end_col,
+            header_rows=header_rows,
+            table_name=table_name
+        )
+        for region_index, start_row, start_col, end_row, end_col, header_rows, table_name in regions
+    ]
+    db.bulk_save_objects(db_regions)
+    db.commit()
+
+
+def get_sheet_merged_cells(db: Session, sheet_id: int) -> List[models.MergedCell]:
+    """获取Sheet的所有合并单元格"""
+    return db.query(models.MergedCell).filter(
+        models.MergedCell.sheet_id == sheet_id
+    ).all()
+
+
+def get_sheet_images(db: Session, sheet_id: int) -> List[models.SheetImage]:
+    """获取Sheet的所有图片"""
+    return db.query(models.SheetImage).filter(
+        models.SheetImage.sheet_id == sheet_id
+    ).all()
+
+
+def get_sheet_image_by_id(db: Session, image_id: int) -> Optional[models.SheetImage]:
+    """根据ID获取图片"""
+    return db.query(models.SheetImage).filter(models.SheetImage.id == image_id).first()
+
+
+def get_sheet_charts(db: Session, sheet_id: int) -> List[models.SheetChart]:
+    """获取Sheet的所有图表"""
+    return db.query(models.SheetChart).filter(
+        models.SheetChart.sheet_id == sheet_id
+    ).all()
+
+
+def get_sheet_table_regions(db: Session, sheet_id: int) -> List[models.TableRegion]:
+    """获取Sheet的所有表格区域"""
+    return db.query(models.TableRegion).filter(
+        models.TableRegion.sheet_id == sheet_id
+    ).order_by(models.TableRegion.region_index).all()
