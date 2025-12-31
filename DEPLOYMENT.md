@@ -9,7 +9,10 @@
 - [侧载部署](#侧载部署)
 - [本地开发部署](#本地开发部署)
 - [数据库说明](#数据库说明)
+- [生产环境配置](#生产环境配置)
 - [常见问题](#常见问题)
+- [服务管理命令](#服务管理命令)
+- [功能说明](#功能说明)
 
 ---
 
@@ -419,7 +422,17 @@ location /api {
 - 检查后端日志是否有图片解析错误
 - 通过 API 测试图片接口：`GET /api/images/{image_id}`
 
-### 7. 重置所有数据
+### 7. 下载文件失败
+
+- 检查后端日志是否有错误
+- 中文文件名使用 RFC 5987 编码格式，确保后端已更新
+
+### 8. 分页切换到全部模式失败
+
+- 确保后端 `page_size` 参数限制已更新为 50000
+- 重新构建后端镜像：`docker-compose build --no-cache backend`
+
+### 9. 重置所有数据
 
 ```bash
 docker-compose down -v
@@ -440,8 +453,13 @@ docker-compose logs -f [service_name]
 # 重启服务
 docker-compose restart [service_name]
 
-# 重建并启动
-docker-compose up -d --build
+# 重建并启动单个服务
+docker-compose up -d --build backend
+docker-compose up -d --build frontend
+
+# 重建所有服务（不使用缓存）
+docker-compose build --no-cache
+docker-compose up -d
 
 # 进入容器
 docker exec -it excel-backend /bin/bash
@@ -464,7 +482,40 @@ docker image prune
 | 内嵌图片 | ✅ | ❌ |
 | 内嵌图表 | ✅ (元信息) | ❌ |
 | 多表格区域 | ✅ | ✅ |
+| 中文文件名下载 | ✅ | ✅ |
+
+### 界面说明
+
+#### 文件列表页
+- 拖拽上传区域
+- 文件列表（文件名、大小、Sheet 数、上传时间）
+- 点击行进入数据查看页
+- 下载和删除按钮
+
+#### 数据查看页（全屏）
+- **工具栏**：返回按钮、文件名、Sheet 选择器、表格区域选择器、分页开关、每页行数、下载按钮
+- **图片/图表区**（可折叠）：显示内嵌图片缩略图和图表信息
+- **数据表格**：
+  - 行号列固定在左侧
+  - 表头固定在顶部
+  - 斑马纹（奇偶行交替颜色）
+  - 悬停高亮
+  - 合并单元格（浅黄色背景）
+  - Excel 风格列号（A, B, C, ..., AA, AB）
+- **状态栏**：行数 × 列数、当前 Sheet、合并单元格数、表格区域数、分页器
 
 ### 多表格区域检测
 
 系统通过识别 Sheet 中的空行来自动分割多个表格区域。当一个 Sheet 中存在多个通过空行分隔的数据块时，会自动识别为多个表格区域，用户可以在前端切换查看。
+
+### 依赖包说明
+
+后端依赖（requirements.txt）：
+- `fastapi` - Web 框架
+- `uvicorn` - ASGI 服务器
+- `sqlalchemy` - ORM
+- `pymysql` - MySQL 驱动
+- `cryptography` - MySQL 8.0 认证支持
+- `openpyxl` - .xlsx 文件解析
+- `xlrd` - .xls 文件解析
+- `python-multipart` - 文件上传支持
