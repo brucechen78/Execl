@@ -2,6 +2,7 @@ import os
 import base64
 from io import BytesIO
 from typing import List, Tuple, Optional
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Query
 from fastapi.responses import StreamingResponse, Response
@@ -577,11 +578,14 @@ def download_file(file_id: int, db: Session = Depends(get_db)):
     else:
         media_type = "application/vnd.ms-excel"
 
+    # 处理中文文件名
+    encoded_filename = quote(db_file.filename)
+
     return StreamingResponse(
         BytesIO(db_file.file_data),
         media_type=media_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{db_file.filename}"'
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
         }
     )
 
