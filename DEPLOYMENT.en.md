@@ -52,7 +52,22 @@ docker-compose up -d --build
 
 First startup requires image building and may take a few minutes.
 
-### 3. Verify Deployment
+### 3. Execute Database Migration
+
+After starting services, execute the database migration script to add user authentication tables:
+
+```bash
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
+```
+
+The migration script will:
+- Create users table (user information)
+- Create sessions table (user sessions)
+- Modify excel_files table to add user_id foreign key
+- Create default migration user (username: migrated_user, password: default123)
+- Associate existing files with the default user
+
+### 4. Verify Deployment
 
 ```bash
 # Check service status
@@ -71,7 +86,7 @@ excel-backend    running
 excel-frontend   running
 ```
 
-### 4. Access Application
+### 5. Access Application
 
 | Service | Address |
 |---------|---------|
@@ -79,7 +94,15 @@ excel-frontend   running
 | API Documentation | http://localhost:8000/docs |
 | MySQL | localhost:3306 |
 
-### 5. Stop Services
+### 6. First Login
+
+1. Visit http://localhost
+2. Login with default user or register a new user:
+   - Default username: `migrated_user`
+   - Default password: `default123`
+3. After login, it's recommended to register a new user and delete the default user
+
+### 7. Stop Services
 
 ```bash
 # Stop services (keep data)
@@ -229,11 +252,13 @@ After frontend starts, visit http://localhost:3000
 
 ## Database Information
 
-The system uses the following tables to store Excel data:
+The system uses the following tables to store data:
 
 | Table | Description |
 |-------|------------|
-| excel_files | Excel file info (includes original file binary) |
+| users | User information (username, email, password hash) |
+| sessions | User sessions (session_id, expiration time) |
+| excel_files | Excel file info (includes original file binary data, user_id) |
 | excel_sheets | Sheet information |
 | excel_data | Cell data |
 | merged_cells | Merged cell information |
@@ -241,19 +266,19 @@ The system uses the following tables to store Excel data:
 | sheet_charts | Embedded chart information (JSON format) |
 | table_regions | Table region information (multi-table support) |
 
-### Upgrading from Older Versions
+### Database Migration
 
-If upgrading from an older version (without merged cells/images/charts/multi-table support), rebuild the database:
+To upgrade from v2.0 to v3.0 (adding user authentication), execute the database migration:
 
 ```bash
-# Stop services and remove data volumes (will clear all uploaded files)
-docker-compose down -v
-
-# Restart
-docker-compose up -d --build
+# Execute migration script
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
-**Note**: This operation deletes all uploaded Excel files. Backup important data beforehand.
+**Note**:
+- Migration script creates default user `migrated_user` (password: `default123`)
+- Existing files will be associated with this default user
+- Recommended to register new users after migration and delete the default user
 
 ### Database Table Structure
 

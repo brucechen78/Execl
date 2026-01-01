@@ -1,8 +1,38 @@
-from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text, LargeBinary, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, BigInteger, DateTime, Text, LargeBinary, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
+
+
+class User(Base):
+    """用户表"""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(100), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    is_active = Column(Boolean, default=True)
+
+    # 关系
+    excel_files = relationship("ExcelFile", back_populates="user")
+
+
+class Session(Base):
+    """会话表"""
+    __tablename__ = "sessions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    session_id = Column(String(255), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),
+                      nullable=False, index=True)
+    created_at = Column(DateTime, server_default=func.now())
+    expires_at = Column(DateTime, nullable=False, index=True)
+
+    # 关系
+    user = relationship("User")
 
 
 class ExcelFile(Base):
@@ -10,6 +40,8 @@ class ExcelFile(Base):
     __tablename__ = "excel_files"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"),
+                     nullable=False, index=True)
     filename = Column(String(255), nullable=False, comment="原始文件名")
     file_data = Column(LargeBinary(length=2**32-1), nullable=False, comment="文件二进制数据")
     file_size = Column(BigInteger, nullable=False, comment="文件大小(字节)")
@@ -18,6 +50,8 @@ class ExcelFile(Base):
 
     # 关联Sheet
     sheets = relationship("ExcelSheet", back_populates="file", cascade="all, delete-orphan")
+    # 关联User
+    user = relationship("User", back_populates="excel_files")
 
 
 class ExcelSheet(Base):

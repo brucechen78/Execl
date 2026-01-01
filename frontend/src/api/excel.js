@@ -1,9 +1,48 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 60000
+  timeout: 60000,
+  withCredentials: true  // 允许携带 cookie
 })
+
+// 请求拦截器：添加认证 token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('session_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器：处理认证错误
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // 401 未认证
+      if (error.response.status === 401) {
+        localStorage.removeItem('session_token')
+        ElMessage.error('登录已过期，请重新登录')
+        // 刷新页面让用户重新登录
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      }
+      // 403 无权限
+      else if (error.response.status === 403) {
+        ElMessage.error('无权限访问')
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 // 上传Excel文件
 export const uploadFile = (file, onProgress) => {

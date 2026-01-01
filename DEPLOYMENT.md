@@ -52,7 +52,22 @@ docker-compose up -d --build
 
 首次启动需要构建镜像，可能需要几分钟。
 
-### 3. 验证部署
+### 3. 执行数据库迁移
+
+启动服务后，需要执行数据库迁移脚本以添加用户认证相关的表：
+
+```bash
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
+```
+
+迁移脚本会：
+- 创建 users 表（用户信息）
+- 创建 sessions 表（用户会话）
+- 修改 excel_files 表添加 user_id 外键
+- 创建默认迁移用户（用户名：migrated_user，密码：default123）
+- 将现有文件关联到默认用户
+
+### 4. 验证部署
 
 ```bash
 # 查看服务状态
@@ -71,7 +86,7 @@ excel-backend    running
 excel-frontend   running
 ```
 
-### 4. 访问应用
+### 5. 访问应用
 
 | 服务 | 地址 |
 |------|------|
@@ -79,7 +94,15 @@ excel-frontend   running
 | API 文档 | http://localhost:8000/docs |
 | MySQL | localhost:3306 |
 
-### 5. 停止服务
+### 6. 首次登录
+
+1. 访问 http://localhost
+2. 使用默认用户登录或注册新用户：
+   - 默认用户名：`migrated_user`
+   - 默认密码：`default123`
+3. 登录后建议修改默认用户密码或注册新用户
+
+### 7. 停止服务
 
 ```bash
 # 停止服务（保留数据）
@@ -119,6 +142,7 @@ docker save mysql:8.0 -o mysql.tar
 - `execl-frontend.tar`
 - `mysql.tar`
 - `docker-compose.yml`
+- `backend/migration.sql`
 
 ### 3. 导入镜像
 
@@ -151,10 +175,11 @@ services:
     # ... 其他配置不变
 ```
 
-### 5. 启动服务
+### 5. 启动服务并执行迁移
 
 ```bash
 docker-compose up -d
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
 ---
@@ -182,7 +207,13 @@ docker run -d \
 CREATE DATABASE excel_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 2. 启动后端
+### 2. 执行数据库迁移
+
+```bash
+mysql -uroot -ppassword excel_manager < backend/migration.sql
+```
+
+### 3. 启动后端
 
 ```bash
 cd backend
@@ -211,7 +242,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 后端启动后访问 http://localhost:8000/docs 查看 API 文档。
 
-### 3. 启动前端
+### 4. 启动前端
 
 ```bash
 cd frontend
@@ -229,11 +260,13 @@ npm run dev
 
 ## 数据库说明
 
-系统使用以下数据表存储 Excel 数据：
+系统使用以下数据表存储数据：
 
 | 表名 | 说明 |
 |------|------|
-| excel_files | Excel 文件信息（包含原始文件二进制数据） |
+| users | 用户信息（用户名、邮箱、密码哈希） |
+| sessions | 用户会话（session_id、过期时间） |
+| excel_files | Excel 文件信息（包含原始文件二进制数据、user_id） |
 | excel_sheets | Sheet 信息 |
 | excel_data | 单元格数据 |
 | merged_cells | 合并单元格信息 |
@@ -241,24 +274,56 @@ npm run dev
 | sheet_charts | 内嵌图表信息（JSON 格式存储） |
 | table_regions | 表格区域信息（多表头支持） |
 
-### 从旧版本升级
+### 数据库迁移
 
-如果从旧版本升级（不支持合并单元格/图片/图表/多表格的版本），需要重建数据库：
+从 v2.0 升级到 v3.0 需要执行数据库迁移：
 
 ```bash
-# 停止服务并删除数据卷（会清除所有已上传的文件）
-docker-compose down -v
-
-# 重新启动
-docker-compose up -d --build
+# 执行迁移脚本
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
-**注意**：此操作会删除所有已上传的 Excel 文件，请提前备份重要数据。
+**注意**：
+- 迁移脚本会创建默认用户 `migrated_user`（密码：`default123`）
+- 现有文件会关联到该默认用户
+- 建议迁移后注册新用户并删除默认用户
 
 ### 数据库表结构
 
+#### 用户表
+
 ```sql
--- 合并单元格表
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    INDEX idx_username (username),
+    INDEX idx_email (email)
+);
+```
+
+#### 会话表
+
+```sql
+CREATE TABLE sessions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(255) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_session_id (session_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expires_at (expires_at)
+);
+```
+
+#### 合并单元格表
+
+```sql
 CREATE TABLE merged_cells (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     sheet_id INT NOT NULL,
@@ -268,8 +333,11 @@ CREATE TABLE merged_cells (
     end_col INT NOT NULL,
     FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
 );
+```
 
--- 图片表
+#### 图片表
+
+```sql
 CREATE TABLE sheet_images (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     sheet_id INT NOT NULL,
@@ -282,8 +350,11 @@ CREATE TABLE sheet_images (
     height INT,
     FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
 );
+```
 
--- 图表表
+#### 图表表
+
+```sql
 CREATE TABLE sheet_charts (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     sheet_id INT NOT NULL,
@@ -296,8 +367,11 @@ CREATE TABLE sheet_charts (
     height INT,
     FOREIGN KEY (sheet_id) REFERENCES excel_sheets(id) ON DELETE CASCADE
 );
+```
 
--- 表格区域表
+#### 表格区域表
+
+```sql
 CREATE TABLE table_regions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     sheet_id INT NOT NULL,
@@ -328,6 +402,20 @@ mysql:
 backend:
   environment:
     DATABASE_URL: mysql+pymysql://root:your_secure_password@mysql:3306/excel_manager
+```
+
+### 修改 Session 密钥
+
+```yaml
+backend:
+  environment:
+    SESSION_SECRET: your-random-secret-key-min-32-chars  # 生成强随机密钥
+```
+
+生成强随机密钥：
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 ### 修改端口
@@ -409,34 +497,50 @@ location /api {
 - 检查文件大小是否超过 50MB
 - 检查文件格式是否为 .xls 或 .xlsx
 - 查看后端日志：`docker-compose logs backend`
+- 确认已登录
 
-### 5. 合并单元格显示不正确
+### 5. 登录失败
+
+- 确认已执行数据库迁移脚本
+- 检查用户名和密码是否正确
+- 查看后端日志：`docker-compose logs backend`
+
+### 6. Session 过期
+
+- Session 默认有效期为 24 小时
+- 过期后需要重新登录
+- 可通过 SESSION_EXPIRE_HOURS 环境变量调整
+
+### 7. 合并单元格显示不正确
 
 - 确保使用最新版本的前端代码
 - 清除浏览器缓存后刷新页面
 - 检查后端日志确认解析是否成功
 
-### 6. 图片无法显示
+### 8. 图片无法显示
 
 - 确认上传的是 .xlsx 格式文件（.xls 格式暂不支持图片提取）
 - 检查后端日志是否有图片解析错误
+- 确认用户有权限访问该图片
 - 通过 API 测试图片接口：`GET /api/images/{image_id}`
 
-### 7. 下载文件失败
+### 9. 下载文件失败
 
 - 检查后端日志是否有错误
-- 中文文件名使用 RFC 5987 编码格式，确保后端已更新
+- 中文文件名使用 RFC 5987 编码格式
+- 确认用户有权限访问该文件
 
-### 8. 分页切换到全部模式失败
+### 10. 分页切换到全部模式失败
 
 - 确保后端 `page_size` 参数限制已更新为 50000
 - 重新构建后端镜像：`docker-compose build --no-cache backend`
 
-### 9. 重置所有数据
+### 11. 重置所有数据
 
 ```bash
 docker-compose down -v
 docker-compose up -d --build
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
 ---
@@ -467,11 +571,23 @@ docker exec -it excel-mysql mysql -uroot -ppassword
 
 # 清理未使用的镜像
 docker image prune
+
+# 执行数据库迁移
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
 ---
 
 ## 功能说明
+
+### 认证功能
+
+| 功能 | 说明 |
+|------|------|
+| 用户注册 | 用户名（3-50字符）、邮箱验证、密码最少6位 |
+| 用户登录 | Session + Cookie 认证，有效期24小时 |
+| 用户登出 | 清除服务端 Session 和客户端状态 |
+| 数据隔离 | 用户只能访问自己的文件和数据 |
 
 ### 支持的 Excel 特性
 
@@ -483,10 +599,19 @@ docker image prune
 | 内嵌图表 | ✅ (元信息) | ❌ |
 | 多表格区域 | ✅ | ✅ |
 | 中文文件名下载 | ✅ | ✅ |
+| 用户数据隔离 | ✅ | ✅ |
 
 ### 界面说明
 
+#### 登录/注册页
+- 登录表单（用户名、密码）
+- 注册表单（用户名、邮箱、密码、确认密码）
+- 表单验证和错误提示
+- 登录/注册切换链接
+
 #### 文件列表页
+- 显示当前用户名
+- 退出登录按钮
 - 拖拽上传区域
 - 文件列表（文件名、大小、Sheet 数、上传时间）
 - 点击行进入数据查看页
@@ -516,6 +641,14 @@ docker image prune
 - `sqlalchemy` - ORM
 - `pymysql` - MySQL 驱动
 - `cryptography` - MySQL 8.0 认证支持
+- `passlib[bcrypt]` - bcrypt 密码哈希
 - `openpyxl` - .xlsx 文件解析
 - `xlrd` - .xls 文件解析
 - `python-multipart` - 文件上传支持
+
+前端依赖（package.json）：
+- `vue` - Vue 3 框架
+- `vite` - 构建工具
+- `element-plus` - UI 组件库
+- `pinia` - 状态管理
+- `axios` - HTTP 客户端

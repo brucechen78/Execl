@@ -14,7 +14,8 @@ import xlrd
 
 from ..database import get_db
 from ..config import MAX_FILE_SIZE, ALLOWED_EXTENSIONS
-from .. import crud, schemas
+from .. import crud, schemas, models
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["excel"])
 
@@ -323,7 +324,8 @@ def parse_xls(file_data: bytes) -> List[dict]:
 @router.post("/upload", response_model=schemas.UploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """上传Excel文件"""
     # 检查文件扩展名
@@ -354,7 +356,8 @@ async def upload_file(
         filename=file.filename,
         file_data=file_data,
         file_size=file_size,
-        sheet_count=len(sheets_data)
+        sheet_count=len(sheets_data),
+        user_id=current_user.id
     )
 
     # 保存Sheet和数据
@@ -418,10 +421,11 @@ async def upload_file(
 def get_files(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """获取文件列表"""
-    total, files = crud.get_files(db, skip=skip, limit=limit)
+    total, files = crud.get_files(db, skip=skip, limit=limit, user_id=current_user.id)
     return schemas.FileListResponse(
         total=total,
         items=[schemas.FileInfo.model_validate(f) for f in files]
@@ -429,9 +433,13 @@ def get_files(
 
 
 @router.get("/files/{file_id}", response_model=schemas.FileDetail)
-def get_file_detail(file_id: int, db: Session = Depends(get_db)):
+def get_file_detail(
+    file_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """获取文件详情（包含Sheet列表）"""
-    db_file = crud.get_file_by_id(db, file_id)
+    db_file = crud.get_file_by_id(db, file_id, user_id=current_user.id)
     if not db_file:
         raise HTTPException(status_code=404, detail="文件不存在")
     return schemas.FileDetail.model_validate(db_file)
@@ -443,11 +451,12 @@ def get_sheet_data(
     sheet_id: int,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=50000),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """获取Sheet数据（分页），包含合并单元格、图片、图表和表格区域信息"""
     # 验证文件存在
-    db_file = crud.get_file_by_id(db, file_id)
+    db_file = crud.get_file_by_id(db, file_id, user_id=current_user.id)
     if not db_file:
         raise HTTPException(status_code=404, detail="文件不存在")
 
@@ -565,9 +574,13 @@ def get_sheet_data(
 
 
 @router.get("/files/{file_id}/download")
-def download_file(file_id: int, db: Session = Depends(get_db)):
+def download_file(
+    file_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """下载原始Excel文件"""
-    db_file = crud.get_file_by_id(db, file_id)
+    db_file = crud.get_file_by_id(db, file_id, user_id=current_user.id)
     if not db_file:
         raise HTTPException(status_code=404, detail="文件不存在")
 
@@ -591,11 +604,26 @@ def download_file(file_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/images/{image_id}")
-def get_image(image_id: int, db: Session = Depends(get_db)):
+def get_image(
+    image_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """获取图片二进制数据"""
     db_image = crud.get_sheet_image_by_id(db, image_id)
     if not db_image:
         raise HTTPException(status_code=404, detail="图片不存在")
+
+    # 验证权限
+    sheet = db.query(models.ExcelSheet).filter(
+        models.ExcelSheet.id == db_image.sheet_id
+    ).first()
+    if not sheet:
+        raise HTTPException(status_code=404, detail="Sheet不存在")
+
+    db_file = crud.get_file_by_id(db, sheet.file_id, user_id=current_user.id)
+    if not db_file:
+        raise HTTPException(status_code=403, detail="无权访问此图片")
 
     # 确定Content-Type
     format_to_mime = {
@@ -615,8 +643,15 @@ def get_image(image_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/files/{file_id}", response_model=schemas.MessageResponse)
-def delete_file(file_id: int, db: Session = Depends(get_db)):
+def delete_file(
+    file_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """删除文件"""
-    if not crud.delete_file(db, file_id):
+    db_file = crud.get_file_by_id(db, file_id, user_id=current_user.id)
+    if not db_file:
         raise HTTPException(status_code=404, detail="文件不存在")
+    db.delete(db_file)
+    db.commit()
     return schemas.MessageResponse(message="删除成功")

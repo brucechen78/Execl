@@ -3,6 +3,44 @@ from typing import List, Optional, Any
 from pydantic import BaseModel
 
 
+# ===== 认证相关 Schema =====
+
+class UserBase(BaseModel):
+    """用户基础模型"""
+    username: str
+    email: str
+
+
+class UserCreate(UserBase):
+    """用户注册模型"""
+    password: str
+
+
+class UserLogin(BaseModel):
+    """用户登录模型"""
+    username: str
+    password: str
+
+
+class UserResponse(UserBase):
+    """用户响应模型"""
+    id: int
+    created_at: datetime
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class SessionResponse(BaseModel):
+    """登录响应模型"""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+# ===== Excel 相关 Schema =====
+
 class MergedCellInfo(BaseModel):
     """合并单元格信息"""
     start_row: int

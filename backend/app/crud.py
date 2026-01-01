@@ -1,8 +1,98 @@
 from typing import List, Optional, Tuple, Any
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from . import models
+
+
+# ===== 用户相关 CRUD =====
+
+def create_user(
+    db: Session,
+    username: str,
+    email: str,
+    password_hash: str
+) -> models.User:
+    """创建用户"""
+    db_user = models.User(
+        username=username,
+        email=email,
+        password_hash=password_hash
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
+    """根据ID获取用户"""
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
+    """根据用户名获取用户"""
+    return db.query(models.User).filter(models.User.username == username).first()
+
+
+def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
+    """根据邮箱获取用户"""
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
+# ===== Session 相关 CRUD =====
+
+def create_session(
+    db: Session,
+    session_id: str,
+    user_id: int,
+    expires_at: datetime
+) -> models.Session:
+    """创建会话"""
+    db_session = models.Session(
+        session_id=session_id,
+        user_id=user_id,
+        expires_at=expires_at
+    )
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+
+def get_session_by_id(db: Session, session_id: str) -> Optional[models.Session]:
+    """根据Session ID获取会话"""
+    return db.query(models.Session).filter(
+        models.Session.session_id == session_id,
+        models.Session.expires_at > func.now()
+    ).first()
+
+
+def delete_session(db: Session, session_id: str) -> bool:
+    """删除会话"""
+    db_session = get_session_by_id(db, session_id)
+    if db_session:
+        db.delete(db_session)
+        db.commit()
+        return True
+    return False
+
+
+def delete_user_sessions(db: Session, user_id: int) -> None:
+    """删除用户的所有会话"""
+    db.query(models.Session).filter(
+        models.Session.user_id == user_id
+    ).delete()
+
+
+def cleanup_expired_sessions(db: Session) -> int:
+    """清理过期会话"""
+    count = db.query(models.Session).filter(
+        models.Session.expires_at <= func.now()
+    ).delete()
+    db.commit()
+    return count
 
 
 def create_excel_file(
@@ -10,10 +100,12 @@ def create_excel_file(
     filename: str,
     file_data: bytes,
     file_size: int,
-    sheet_count: int
+    sheet_count: int,
+    user_id: int
 ) -> models.ExcelFile:
     """创建Excel文件记录"""
     db_file = models.ExcelFile(
+        user_id=user_id,
         filename=filename,
         file_data=file_data,
         file_size=file_size,
@@ -66,18 +158,34 @@ def bulk_create_excel_data(
     db.commit()
 
 
-def get_files(db: Session, skip: int = 0, limit: int = 100) -> Tuple[int, List[models.ExcelFile]]:
+def get_files(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    user_id: int = None
+) -> Tuple[int, List[models.ExcelFile]]:
     """获取文件列表"""
-    total = db.query(func.count(models.ExcelFile.id)).scalar()
-    files = db.query(models.ExcelFile).order_by(
+    query = db.query(models.ExcelFile)
+    if user_id is not None:
+        query = query.filter(models.ExcelFile.user_id == user_id)
+
+    total = query.count()
+    files = query.order_by(
         models.ExcelFile.created_at.desc()
     ).offset(skip).limit(limit).all()
     return total, files
 
 
-def get_file_by_id(db: Session, file_id: int) -> Optional[models.ExcelFile]:
+def get_file_by_id(
+    db: Session,
+    file_id: int,
+    user_id: int = None
+) -> Optional[models.ExcelFile]:
     """根据ID获取文件"""
-    return db.query(models.ExcelFile).filter(models.ExcelFile.id == file_id).first()
+    query = db.query(models.ExcelFile).filter(models.ExcelFile.id == file_id)
+    if user_id is not None:
+        query = query.filter(models.ExcelFile.user_id == user_id)
+    return query.first()
 
 
 def get_sheet_by_id(db: Session, sheet_id: int) -> Optional[models.ExcelSheet]:
