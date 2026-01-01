@@ -437,12 +437,15 @@ const handleDownload = async () => {
 </script>
 
 <style scoped>
+/* 导入全局样式 */
+@import '../styles/theme.css';
+
 .data-view {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  background: #fff;
+  background: var(--bg-primary);
 }
 
 /* 工具栏 */
@@ -450,10 +453,12 @@ const handleDownload = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
-  background: #fafafa;
-  border-bottom: 1px solid #ebeef5;
+  padding: 15px 25px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .toolbar-left,
@@ -465,8 +470,12 @@ const handleDownload = async () => {
 
 .filename {
   font-weight: 600;
-  font-size: 15px;
-  color: #303133;
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -475,9 +484,9 @@ const handleDownload = async () => {
 
 /* 媒体展示区域 */
 .media-section {
-  padding: 10px 20px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  padding: 20px 25px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
@@ -497,10 +506,18 @@ const handleDownload = async () => {
 }
 
 .thumbnail {
-  width: 100px;
-  height: 80px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  width: 120px;
+  height: 90px;
+  border: 2px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.thumbnail:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
 }
 
 .image-error {
@@ -509,25 +526,36 @@ const handleDownload = async () => {
   align-items: center;
   width: 100%;
   height: 100%;
-  background: #f5f7fa;
-  color: #909399;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
 }
 
 .media-info {
-  font-size: 12px;
-  color: #909399;
+  font-size: 13px;
+  color: var(--text-muted);
   text-align: center;
-  margin-top: 4px;
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 .charts-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .chart-tag {
   cursor: default;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: all var(--transition-normal);
+}
+
+.chart-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 /* 表格区域 */
@@ -536,6 +564,8 @@ const handleDownload = async () => {
   overflow: hidden;
   padding: 0;
   min-height: 0;
+  background: var(--bg-secondary);
+  position: relative;
 }
 
 .table-container {
@@ -545,39 +575,48 @@ const handleDownload = async () => {
 }
 
 .excel-table {
-  border-collapse: collapse;
-  font-size: 13px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
   width: max-content;
   min-width: 100%;
+  font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', Arial, sans-serif;
 }
 
 .excel-table th,
 .excel-table td {
-  border: 1px solid #e8e8e8;
-  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  padding: 10px 14px;
   text-align: left;
   white-space: nowrap;
+  transition: all var(--transition-fast);
 }
 
 .excel-table th {
-  background-color: #f0f2f5;
+  background: var(--primary-gradient) !important;
+  color: white !important;
   font-weight: 600;
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: var(--shadow-md);
+  text-transform: none;
+  letter-spacing: 0.5px;
 }
 
 .row-index-header,
 .row-index-cell {
-  background-color: #f5f7fa !important;
-  color: #909399;
-  font-size: 12px;
+  background: var(--accent-gradient) !important;
+  color: white !important;
+  font-size: 13px;
+  font-weight: 600;
   text-align: center;
   width: 60px;
   min-width: 60px;
   position: sticky;
   left: 0;
   z-index: 5;
+  box-shadow: var(--shadow-md);
 }
 
 .row-index-header {
@@ -593,34 +632,61 @@ const handleDownload = async () => {
   flex-direction: column;
   align-items: flex-start;
   line-height: 1.3;
+  padding: 4px 0;
 }
 
 .header-title {
   font-weight: 600;
-  color: #303133;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .header-index {
   font-size: 11px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.8);
   font-weight: normal;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
 }
 
 .even-row td {
-  background-color: #ffffff;
+  background-color: var(--bg-secondary);
 }
 
 .odd-row td {
-  background-color: #fafbfc;
+  background-color: var(--bg-primary);
 }
 
 .excel-table tr:hover td {
-  background-color: #ecf5ff !important;
+  background-color: rgba(102, 126, 234, 0.1) !important;
+  transform: scale(1.01);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15) inset;
 }
 
 .merged-cell {
-  background-color: #fff8e6 !important;
-  font-weight: 500;
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%) !important;
+  font-weight: 600;
+  color: var(--accent-color);
+  position: relative;
+}
+
+.merged-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.excel-table tr:hover .merged-cell::before {
+  opacity: 1;
 }
 
 /* 状态栏 */
@@ -628,10 +694,12 @@ const handleDownload = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 20px;
-  background: #fafafa;
-  border-top: 1px solid #ebeef5;
+  padding: 12px 25px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-primary);
   flex-shrink: 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .status-left,
@@ -641,8 +709,10 @@ const handleDownload = async () => {
 }
 
 .all-data-hint {
-  color: #67c23a;
-  font-size: 13px;
+  color: var(--success-color);
+  font-size: 14px;
+  font-weight: 500;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 /* 图片预览 */
@@ -652,11 +722,22 @@ const handleDownload = async () => {
   align-items: center;
   max-height: 70vh;
   overflow: auto;
+  padding: 20px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
 }
 
 .preview-image {
   max-width: 100%;
   max-height: 70vh;
   object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  transition: all var(--transition-normal);
+}
+
+.preview-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 </style>

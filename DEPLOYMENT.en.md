@@ -1,30 +1,41 @@
-# Deployment Guide
+# 🎉 Deployment Guide
 
-This document describes the deployment methods for the Excel File Management System.
+This document describes the deployment methods for the Excel File Management System with **youthful design** theme.
 
-## Table of Contents
+![Excel Expert](https://img.shields.io/badge/Excel-Management-Expert-brightgreen?style=for-the-badge&logo=microsoft-excel)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql)
 
-- [System Requirements](#system-requirements)
-- [Docker Deployment (Recommended)](#docker-deployment-recommended)
-- [Sideload Deployment](#sideload-deployment)
-- [Local Development Deployment](#local-development-deployment)
-- [Database Information](#database-information)
-- [Production Configuration](#production-configuration)
-- [Troubleshooting](#troubleshooting)
-- [Service Management Commands](#service-management-commands)
-- [Feature Documentation](#feature-documentation)
+## 📋 Table of Contents
+
+- [🌍 System Requirements](#system-requirements)
+- [🐳 Docker Deployment (Recommended)](#docker-deployment-recommended)
+- [📦 Sideload Deployment](#sideload-deployment)
+- [💻 Local Development Deployment](#local-development-deployment)
+- [💾 Database Information](#database-information)
+- [⚙️ Production Configuration](#production-configuration)
+- [❓ Troubleshooting](#troubleshooting)
+- [🔧 Service Management Commands](#service-management-commands)
+- [✨ Feature Documentation](#feature-documentation)
 
 ---
 
-## System Requirements
+<div align="center">
+  <img src="https://img.shields.io/badge/Excel-Management-Expert-brightgreen?style=for-the-badge&logo=microsoft-excel" alt="Excel Management Expert">
+  <p>🎨 Youthful Theme | 🚀 High Performance Deployment | 🔒 Secure & Reliable</p>
+</div>
 
-### Docker Deployment
+---
+
+## 🌍 System Requirements
+
+### 🐳 Docker Deployment
 
 - Docker 20.10+
 - Docker Compose 2.0+
 - Available ports: 80 (frontend), 8000 (backend), 3306 (MySQL)
 
-### Local Development
+### 💻 Local Development
 
 - Python 3.10+
 - Node.js 18+
@@ -32,9 +43,9 @@ This document describes the deployment methods for the Excel File Management Sys
 
 ---
 
-## Docker Deployment (Recommended)
+## 🐳 Docker Deployment (Recommended)
 
-### 1. Preparation
+### 📌 1. Preparation
 
 Ensure Docker and Docker Compose are installed:
 
@@ -43,16 +54,16 @@ docker --version
 docker-compose --version
 ```
 
-### 2. Start Services
+### 🚀 2. Start Services
 
 ```bash
 cd Execl
 docker-compose up -d --build
 ```
 
-First startup requires image building and may take a few minutes.
+🎉 First startup requires image building and may take a few minutes.
 
-### 3. Execute Database Migration
+### 📊 3. Execute Database Migration
 
 After starting services, execute the database migration script to add user authentication tables:
 
@@ -60,14 +71,14 @@ After starting services, execute the database migration script to add user authe
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
-The migration script will:
-- Create users table (user information)
-- Create sessions table (user sessions)
-- Modify excel_files table to add user_id foreign key
-- Create default migration user (username: migrated_user, password: default123)
-- Associate existing files with the default user
+✨ Migration script will:
+- 🔐 Create users table (user information)
+- 🎫 Create sessions table (user sessions)
+- 🔗 Modify excel_files table to add user_id foreign key
+- 👤 Create default migration user (username: migrated_user, password: default123)
+- 📁 Associate existing files with the default user
 
-### 4. Verify Deployment
+### ✅ 4. Verify Deployment
 
 ```bash
 # Check service status
@@ -86,15 +97,15 @@ excel-backend    running
 excel-frontend   running
 ```
 
-### 5. Access Application
+### 🌐 5. Access Application
 
-| Service | Address |
-|---------|---------|
-| Frontend | http://localhost |
-| API Documentation | http://localhost:8000/docs |
-| MySQL | localhost:3306 |
+| Service | Address | Description |
+|---------|---------|-------------|
+| 🎨 Frontend | http://localhost | Youthful style interface |
+| 📚 API Documentation | http://localhost:8000/docs | Backend API documentation |
+| 💾 MySQL | localhost:3306 | Database service |
 
-### 6. First Login
+### 👤 6. First Login
 
 1. Visit http://localhost
 2. Login with default user or register a new user:
@@ -102,7 +113,7 @@ excel-frontend   running
    - Default password: `default123`
 3. After login, it's recommended to register a new user and delete the default user
 
-### 7. Stop Services
+### 🛑 7. Stop Services
 
 ```bash
 # Stop services (keep data)
@@ -114,11 +125,11 @@ docker-compose down -v
 
 ---
 
-## Sideload Deployment
+## 📦 Sideload Deployment
 
 Sideload deployment is useful for scenarios requiring offline deployment by exporting Docker images.
 
-### 1. Build and Export Images
+### 🏗️ 1. Build and Export Images
 
 On a machine with network access:
 
@@ -134,7 +145,7 @@ docker save execl-frontend:latest -o execl-frontend.tar
 docker save mysql:8.0 -o mysql.tar
 ```
 
-### 2. Transfer Files
+### 📤 2. Transfer Files
 
 Transfer the following files to the target machine:
 
@@ -142,8 +153,9 @@ Transfer the following files to the target machine:
 - `execl-frontend.tar`
 - `mysql.tar`
 - `docker-compose.yml`
+- `backend/migration.sql`
 
-### 3. Import Images
+### 📥 3. Import Images
 
 On the target machine:
 
@@ -153,7 +165,7 @@ docker load -i execl-backend.tar
 docker load -i execl-frontend.tar
 ```
 
-### 4. Modify docker-compose.yml
+### ✏️ 4. Modify docker-compose.yml
 
 Change build instructions to use images:
 
@@ -174,17 +186,18 @@ services:
     # ... other config unchanged
 ```
 
-### 5. Start Services
+### 🚀 5. Start Services
 
 ```bash
 docker-compose up -d
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
 ---
 
-## Local Development Deployment
+## 💻 Local Development Deployment
 
-### 1. Start MySQL
+### 💾 1. Start MySQL
 
 Quick start with Docker:
 
@@ -205,7 +218,7 @@ Or use locally installed MySQL and create database:
 CREATE DATABASE excel_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 2. Start Backend
+### ⚡ 2. Start Backend
 
 ```bash
 cd backend
@@ -232,9 +245,9 @@ export DATABASE_URL=mysql+pymysql://root:password@localhost:3306/excel_manager
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-After backend starts, visit http://localhost:8000/docs to view API documentation.
+📚 After backend starts, visit http://localhost:8000/docs to view API documentation.
 
-### 3. Start Frontend
+### 🎨 3. Start Frontend
 
 ```bash
 cd frontend
@@ -246,27 +259,29 @@ npm install
 npm run dev
 ```
 
-After frontend starts, visit http://localhost:3000
+🌐 After frontend starts, visit http://localhost:3000
 
 ---
 
-## Database Information
+## 💾 Database Information
+
+### 📊 Table Structure
 
 The system uses the following tables to store data:
 
 | Table | Description |
 |-------|------------|
-| users | User information (username, email, password hash) |
-| sessions | User sessions (session_id, expiration time) |
-| excel_files | Excel file info (includes original file binary data, user_id) |
-| excel_sheets | Sheet information |
-| excel_data | Cell data |
-| merged_cells | Merged cell information |
-| sheet_images | Embedded image data (MEDIUMBLOB, max 16MB) |
-| sheet_charts | Embedded chart information (JSON format) |
-| table_regions | Table region information (multi-table support) |
+| 👤 users | User information (username, email, password hash) |
+| 🎫 sessions | User sessions (session_id, expiration time) |
+| 📁 excel_files | Excel file info (includes original file binary data, user_id) |
+| 📄 excel_sheets | Sheet information |
+| 📝 excel_data | Cell data |
+| 🔗 merged_cells | Merged cell information |
+| 🖼️ sheet_images | Embedded image data (MEDIUMBLOB, max 16MB) |
+| 📈 sheet_charts | Embedded chart information (JSON format) |
+| 🗂️ table_regions | Table region information (multi-table support) |
 
-### Database Migration
+### 🔄 Database Migration
 
 To upgrade from v2.0 to v3.0 (adding user authentication), execute the database migration:
 
@@ -275,14 +290,39 @@ To upgrade from v2.0 to v3.0 (adding user authentication), execute the database 
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
-**Note**:
+**⚠️ Note**:
 - Migration script creates default user `migrated_user` (password: `default123`)
 - Existing files will be associated with this default user
 - Recommended to register new users after migration and delete the default user
 
-### Database Table Structure
+### 🔧 Database Table Structure
 
 ```sql
+-- Users table
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    INDEX idx_username (username),
+    INDEX idx_email (email)
+);
+
+-- Sessions table
+CREATE TABLE sessions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(255) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_session_id (session_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expires_at (expires_at)
+);
+
 -- Merged cells table
 CREATE TABLE merged_cells (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -339,9 +379,9 @@ CREATE TABLE table_regions (
 
 ---
 
-## Production Configuration
+## ⚙️ Production Configuration
 
-### Change Database Password
+### 🔐 Change Database Password
 
 Edit `docker-compose.yml`:
 
@@ -355,7 +395,21 @@ backend:
     DATABASE_URL: mysql+pymysql://root:your_secure_password@mysql:3306/excel_manager
 ```
 
-### Change Ports
+### 🎫 Change Session Secret
+
+```yaml
+backend:
+  environment:
+    SESSION_SECRET: your-random-secret-key-min-32-chars  # Generate strong random key
+```
+
+Generate strong random key:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### 🌐 Change Ports
 
 ```yaml
 frontend:
@@ -375,7 +429,7 @@ location /api {
 }
 ```
 
-### Data Persistence
+### 💾 Data Persistence
 
 MySQL data is stored in Docker volumes by default. View data volumes:
 
@@ -397,9 +451,9 @@ docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backup.sql
 
 ---
 
-## Troubleshooting
+## ❓ Troubleshooting
 
-### 1. Port Already in Use
+### 🔌 1. Port Already in Use
 
 ```
 Error: bind: address already in use
@@ -409,7 +463,7 @@ Solution:
 - Modify port mappings in `docker-compose.yml`
 - Or stop the service using the port
 
-### 2. MySQL Connection Failed
+### 🗄️ 2. MySQL Connection Failed
 
 ```
 Can't connect to MySQL server
@@ -419,7 +473,7 @@ Solution:
 - Wait for MySQL to fully start (check `docker-compose logs mysql`)
 - Verify DATABASE_URL configuration is correct
 
-### 3. Frontend Cannot Access Backend API
+### 🌐 3. Frontend Cannot Access Backend API
 
 Check proxy configuration in `frontend/nginx.conf`:
 
@@ -429,50 +483,67 @@ location /api {
 }
 ```
 
-### 4. File Upload Failed
+### 📤 4. File Upload Failed
 
 - Check if file size exceeds 50MB
 - Check if file format is .xls or .xlsx
 - View backend logs: `docker-compose logs backend`
+- Confirm logged in
 
-### 5. Merged Cells Display Incorrect
+### 🔐 5. Login Failed
+
+- Confirm executed database migration script
+- Check username and password are correct
+- View backend logs: `docker-compose logs backend`
+
+### ⏰ 6. Session Expired
+
+- Session default validity is 24 hours
+- Need to re-login after expiration
+- Can adjust via SESSION_EXPIRE_HOURS environment variable
+
+### 🔄 7. Merged Cells Display Incorrect
 
 - Ensure using the latest frontend code
 - Clear browser cache and refresh page
 - Check backend logs for parsing errors
 
-### 6. Images Not Displaying
+### 🖼️ 8. Images Not Displaying
 
 - Confirm uploaded file is .xlsx format (.xls image extraction not supported)
 - Check backend logs for image parsing errors
 - Test image endpoint via API: `GET /api/images/{image_id}`
+- Confirm user has permission to access the image
 
-### 7. File Download Failed
+### 📥 9. File Download Failed
 
 - Check backend logs for errors
 - Chinese filenames use RFC 5987 encoding format; ensure backend is updated
+- Confirm user has permission to access the file
 
-### 8. Pagination Switch to All Mode Failed
+### 📊 10. Pagination Switch to All Mode Failed
 
 - Ensure backend `page_size` parameter limit is updated to 50000
 - Rebuild backend image: `docker-compose build --no-cache backend`
 
-### 9. Reset All Data
+### 🗑️ 11. Reset All Data
 
 ```bash
 docker-compose down -v
 docker-compose up -d --build
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
 ---
 
-## Service Management Commands
+## 🔧 Service Management Commands
 
+### 📊 Service Status
 ```bash
-# View status
+# View all service status
 docker-compose ps
 
-# View logs
+# View real-time logs
 docker-compose logs -f [service_name]
 
 # Restart service
@@ -485,62 +556,121 @@ docker-compose up -d --build frontend
 # Rebuild all services (without cache)
 docker-compose build --no-cache
 docker-compose up -d
+```
 
+### 🛠️ Container Operations
+```bash
 # Enter container
 docker exec -it excel-backend /bin/bash
+docker exec -it excel-frontend /bin/bash
 docker exec -it excel-mysql mysql -uroot -ppassword
 
 # Clean up unused images
 docker image prune
+
+# View container resource usage
+docker stats
+```
+
+### 💾 Data Management
+```bash
+# Backup database
+docker exec excel-mysql mysqldump -uroot -ppassword excel_manager > backup.sql
+
+# Restore database
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backup.sql
+
+# Execute database migration
+docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
+
+# View database size
+docker exec excel-mysql mysql -uroot -ppassword -e "SELECT table_name, ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size in MB' FROM information_schema.tables WHERE table_schema='excel_manager';"
 ```
 
 ---
 
-## Feature Documentation
+## ✨ Feature Documentation
 
-### Supported Excel Features
+### 🔐 Authentication Features
+
+| Feature | Description |
+|---------|-------------|
+| 👤 User Registration | Username (3-50 chars), email validation, minimum 6-character password |
+| 🔐 User Login | Session + Cookie authentication, 24-hour validity |
+| 👋 User Logout | Clear server-side and client-side state |
+| 🔒 Data Isolation | Users can only access their own files and data |
+
+### 🚀 Supported Excel Features
 
 | Feature | .xlsx | .xls |
 |---------|-------|------|
-| Cell data | ✅ | ✅ |
-| Merged cells | ✅ | ✅ |
-| Embedded images | ✅ | ❌ |
-| Embedded charts | ✅ (metadata) | ❌ |
-| Multiple table regions | ✅ | ✅ |
-| Chinese filename download | ✅ | ✅ |
+| 📊 Cell data | ✅ | ✅ |
+| 🔄 Merged cells | ✅ | ✅ |
+| 🖼️ Embedded images | ✅ | ❌ |
+| 📈 Embedded charts | ✅ (metadata) | ❌ |
+| 📋 Multiple table regions | ✅ | ✅ |
+| 🌐 Chinese filename download | ✅ | ✅ |
+| 🔐 User data isolation | ✅ | ✅ |
 
-### Interface Description
+### 🎨 Interface Description
 
-#### File List Page
-- Drag-drop upload area
-- File list (filename, size, sheet count, upload time)
-- Click row to enter data view page
-- Download and delete buttons
+#### 🔐 Login/Registration Page
+- 📝 Dual forms with smooth switching
+- 🎨 Gradient background with floating shapes
+- ✨ Animation effects and micro-interactions
+- 🎯 Form validation with user-friendly error messages
 
-#### Data View Page (Full-Screen)
-- **Toolbar**: Back button, filename, Sheet selector, table region selector, pagination toggle, rows per page, download button
-- **Image/Chart Area** (collapsible): Display embedded image thumbnails and chart information
-- **Data Table**:
-  - Row number column fixed on left
-  - Header row fixed at top
-  - Zebra stripes (alternating row colors)
-  - Hover highlights
-  - Merged cells (light yellow background)
-  - Excel-style column letters (A, B, C, ..., AA, AB)
-- **Status Bar**: Row × Column count, current Sheet, merged cell count, table region count, pagination controls
+#### 📁 File List Page
+- 👤 User info display with avatar
+- 🌈 Gradient title effect
+- 📤 Drag-and-drop upload with animations
+- 📄 Beautiful file cards with transitions
 
-### Multiple Table Region Detection
+#### 📊 Data View Page (Full-Screen)
+- **🔧 Toolbar**: Back button, filename, Sheet selector, pagination toggle, download button
+- **🖼️ Image/Chart Area** (collapsible): Embedded image thumbnails and chart info
+- **📋 Data Table**:
+  - 🔢 Row numbers fixed on left with gradient
+  - 📑 Headers fixed at top with gradient
+  - 🎭 Zebra stripes with gradient effects
+  - ✨ Hover highlights with animations
+  - 🔄 Merged cells with gradient background
+  - 📊 Excel-style column letters (A, B, C, ..., AA, AB)
+- **📊 Status Bar**: Row×Column count, current Sheet, pagination controls
+
+### 🗂️ Multiple Table Region Detection
 
 The system automatically splits table regions by identifying empty rows in a Sheet. When multiple data blocks separated by empty rows are detected, they are automatically identified as multiple table regions, allowing users to switch between them on the frontend.
 
-### Dependency Package Description
+### 📦 Dependency Package Description
 
-Backend dependencies (requirements.txt):
+#### ⚙️ Backend Dependencies (requirements.txt)
 - `fastapi` - Web framework
 - `uvicorn` - ASGI server
 - `sqlalchemy` - ORM
 - `pymysql` - MySQL driver
 - `cryptography` - MySQL 8.0 authentication support
+- `passlib[bcrypt]` - bcrypt password hashing
 - `openpyxl` - .xlsx file parsing
 - `xlrd` - .xls file parsing
 - `python-multipart` - File upload support
+
+#### 🎨 Frontend Dependencies (package.json)
+- `vue` - Vue 3 framework
+- `vite` - Build tool
+- `element-plus` - UI component library
+- `pinia` - State management
+- `axios` - HTTP client
+
+---
+
+<div align="center">
+  <p>
+    Made with ❤️ by Excel 管理专家团队
+  </p>
+  <p>
+    <a href="#docker-deployment">🐳 Docker</a> •
+    <a href="#local-development-deployment">💻 Local Dev</a> •
+    <a href="#troubleshooting">❓ Troubleshooting</a>
+  </p>
+</div>

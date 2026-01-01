@@ -1,57 +1,70 @@
-# Excel File Management System
+# 🎉 Excel File Management System
 
-A web-based Excel file management system supporting multi-user access, user authentication, upload, storage, viewing, downloading, and deleting of Excel files with complete data isolation between users.
+A web-based Excel file management system with **youthful design**, supporting multi-user access, user authentication, upload, storage, viewing, downloading, and deleting of Excel files with complete data isolation between users.
 
-## Features
+![Excel Expert](https://img.shields.io/badge/Excel-Management-Expert-brightgreen?style=for-the-badge&logo=microsoft-excel)
+![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=for-the-badge&logo=vue.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi)
 
-### Authentication
-- **User Registration**: Username and email registration, minimum 6-character password
-- **User Login**: Session + Cookie authentication, 24-hour validity
-- **User Logout**: Clear server-side and client-side state
-- **Data Isolation**: Users can only access their own files and data
+## ✨ Features
 
-### Core Features
-- **File Upload**: Support for .xls and .xlsx formats with drag-and-drop or click-based upload, files linked to current user
-- **File Storage**: Original file binary storage + structured parsed data storage with user-level data isolation
-- **Data Display**: Full-screen table display with pagination/all-data toggle, multi-Sheet switching, only shows current user's files
-- **File Management**: File list display (current user only), file download, file deletion
+### 🔐 Authentication
+- **👤 User Registration**: Username and email registration, minimum 6-character password
+- **🔐 User Login**: Session + Cookie authentication, 24-hour validity
+- **👋 User Logout**: Clear server-side and client-side state
+- **🔒 Data Isolation**: Users can only access their own files and data
 
-### Advanced Features
-- **Merged Cells**: Correct parsing and rendering of merged cells in Excel (light yellow highlight)
-- **Embedded Images**: Extract and display images from Excel with preview support on click
-- **Embedded Charts**: Identify chart types and location information
-- **Multiple Table Regions**: Auto-detect multiple tables within a single Sheet (separated by empty rows) with switching support
+### 🚀 Core Features
+- **📤 File Upload**: Support for .xls and .xlsx formats with drag-and-drop or click-based upload, files linked to current user
+- **💾 File Storage**: Original file binary storage + structured parsed data storage with user-level data isolation
+- **👀 Data Display**: Full-screen table display with pagination/all-data toggle, multi-Sheet switching, only shows current user's files
+- **📁 File Management**: File list display (current user only), file download, file deletion
 
-## Interface Preview
+### 🎨 Advanced Features
+- **🔄 Merged Cells**: Correct parsing and rendering of merged cells in Excel (gradient highlight)
+- **🖼️ Embedded Images**: Extract and display images from Excel with preview support on click
+- **📈 Embedded Charts**: Identify chart types and location information
+- **🗂️ Multiple Table Regions**: Auto-detect multiple tables within a single Sheet (separated by empty rows) with switching support
 
-### Login/Registration Page
-- User login and registration forms
-- Form validation and error messages
-- Login/registration state switching
+### 🌈 Interface Features
+- **💫 Youthful Theme**: Vibrant gradients, rounded corners, smooth animations
+- **🎭 Modern Design**: Glass-morphism effects, floating animations, shadow layers
+- **📱 Responsive Layout**: Perfect for desktop and mobile devices
+- **✨ Interactive Experience**: Hover effects, transition animations, micro-interactions
 
-### File List Page
-- Display current username and logout button
-- Drag-drop upload area
-- File list (filename, size, sheet count, upload time)
-- Support for download and delete operations
+## 🎭 Interface Preview
 
-### Data View Page (Full-Screen)
-- Top toolbar: Back button, filename, Sheet selector, table region selector, pagination toggle, download button
-- Image/chart display area (collapsible)
-- Full-screen data table: Fixed row numbers, fixed header, zebra stripes, hover highlights
-- Bottom status bar: Row×Column count, current Sheet, merged cell count, table region count, pagination controls
+### 🔐 Login/Registration Page
+- **📝 Dual Forms**: User login and registration forms with smooth switching
+- **🎨 Gradient Background**: Vibrant blue-purple gradient background
+- **✨ Animation Effects**: Floating decorative shapes, dynamic atmosphere
+- **🎯 Form Validation**: Real-time validation with user-friendly error messages
 
-## Technology Stack
+### 📁 File List Page
+- **🎭 Modern Navigation**: User avatar, username, and role display
+- **🌈 Gradient Title**: "Excel Management Expert" with gradient text effect
+- **📤 Card Upload**: Drag-and-drop upload with floating animation
+- **📄 Beautiful List**: File display with cards, shadows, and transitions
+
+### 📊 Data View Page (Full-Screen)
+- **🌈 Gradient Headers**: Blue-purple gradient table headers with white text
+- **🎨 Colorful Row Numbers**: Pink-orange gradient row number column
+- **✨ Floating Effects**: Rows subtly lift on hover with shadow effects
+- **🔧 Glass Toolbar**: Semi-transparent background, blur effect, ultra-modern
+- **✨ Animated Status Bar**: Pulse animation effect when displaying all data
+
+## 🛠 Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vue 3 + Vite + Element Plus + Pinia |
-| Backend | Python + FastAPI + SQLAlchemy + Passlib |
-| Database | MySQL 8.0 |
-| Deployment | Docker + Docker Compose |
-| Authentication | Session + Cookie + bcrypt |
+| 🎨 Frontend | Vue 3 + Vite + Element Plus + Pinia |
+| ⚡ Backend | Python + FastAPI + SQLAlchemy + Passlib |
+| 🗄️ Database | MySQL 8.0 |
+| 🐳 Deployment | Docker + Docker Compose |
+| 🔐 Authentication | Session + Cookie + bcrypt |
+| 🎯 UI Design | CSS custom properties, gradients, animations, glass-morphism |
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ├── backend/                # Backend service
@@ -88,29 +101,31 @@ A web-based Excel file management system supporting multi-user access, user auth
 │   ├── nginx.conf
 │   └── Dockerfile
 ├── docker-compose.yml
-├── README.md
-└── DEPLOYMENT.md          # Detailed deployment guide
+├── README.md              # 🇨🇳 Chinese documentation
+├── README.en.md          # 🇺🇸 English documentation
+├── DEPLOYMENT.md         # 🇨🇳 Chinese deployment guide
+└── DEPLOYMENT.en.md     # 🇺🇸 English deployment guide
 ```
 
-## Database Models
+## 🗄️ Database Models
 
 The system uses the following tables to store data:
 
 | Table | Description |
 |-------|------------|
-| users | User information (username, email, password hash) |
-| sessions | User sessions (session_id, expiration time) |
-| excel_files | Excel file info (includes original file binary data, user_id) |
-| excel_sheets | Sheet information |
-| excel_data | Cell data |
-| merged_cells | Merged cell information |
-| sheet_images | Embedded image data |
-| sheet_charts | Embedded chart information |
-| table_regions | Table region information (multi-table support) |
+| 👤 users | User information (username, email, password hash) |
+| 🎫 sessions | User sessions (session_id, expiration time) |
+| 📁 excel_files | Excel file info (includes original file binary data, user_id) |
+| 📄 excel_sheets | Sheet information |
+| 📝 excel_data | Cell data |
+| 🔗 merged_cells | Merged cell information |
+| 🖼️ sheet_images | Embedded image data (MEDIUMBLOB, max 16MB) |
+| 📈 sheet_charts | Embedded chart information (JSON format) |
+| 🗂️ table_regions | Table region information (multi-table support) |
 
-## Quick Start
+## 🚀 Quick Start
 
-### Using Docker (Recommended)
+### 🐳 Using Docker (Recommended)
 
 ```bash
 # Navigate to project directory after cloning
@@ -123,9 +138,9 @@ docker-compose up -d --build
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
-First startup requires building images, which may take a few minutes.
+🎉 First startup requires building images, which may take a few minutes.
 
-### Verify Deployment
+### ✅ Verify Deployment
 
 ```bash
 # Check service status
@@ -144,26 +159,23 @@ excel-backend    running
 excel-frontend   running
 ```
 
-### Access Application
+### 🌐 Access Application
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost |
-| API Documentation | http://localhost:8000/docs |
-| MySQL | localhost:3306 |
+| Service | URL | Description |
+|---------|-----|-------------|
+| 🎨 Frontend | http://localhost | Youthful style interface |
+| 📚 API Docs | http://localhost:8000/docs | Backend API documentation |
+| 💾 MySQL | localhost:3306 | Database service |
 
-### First Login
+### 👤 First Login
 
-The database migration creates a default user for migrating existing data:
+1. 🌐 Visit http://localhost
+2. 🔐 Use default user or register new user:
+   - 📝 Default username: `migrated_user`
+   - 🔑 Default password: `default123`
+3. 🎯 After login, recommend registering new user and deleting default user
 
-- Username: `migrated_user`
-- Password: `default123`
-
-After login, it's recommended to:
-1. Register a new user
-2. Delete the default user or change their password
-
-### Stop Services
+### 🛑 Stop Services
 
 ```bash
 # Stop services (keep data)
@@ -173,9 +185,9 @@ docker-compose down
 docker-compose down -v
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
-### Authentication API
+### 🔐 Authentication API
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -184,7 +196,7 @@ docker-compose down -v
 | POST | /api/auth/logout | User logout |
 | GET | /api/auth/me | Get current user info |
 
-### File API (Requires Authentication)
+### 📁 File API (Requires Authentication)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -196,7 +208,7 @@ docker-compose down -v
 | GET | /api/images/{image_id} | Get image binary data |
 | DELETE | /api/files/{id} | Delete file |
 
-### Sheet Data Response Structure
+### 📊 Sheet Data Response Structure
 
 ```json
 {
@@ -224,9 +236,9 @@ docker-compose down -v
 }
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-### Environment Variables
+### 🌍 Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -234,65 +246,65 @@ docker-compose down -v
 | SESSION_SECRET | excel-manager-secret-key-change-in-production-2024 | Session encryption key |
 | SESSION_EXPIRE_HOURS | 24 | Session validity period (hours) |
 
-### File Limits
+### 📁 File Limits
 
-- Maximum file size: 50MB
-- Supported formats: .xls, .xlsx
-- Pagination mode: 20/50/100/200/500 rows per page
-- All mode: Up to 50,000 rows
+- 🎯 Maximum file size: 50MB
+- 📄 Supported formats: .xls, .xlsx
+- 📊 Pagination mode: 20/50/100/200/500 rows per page
+- 🔄 All mode: Up to 50,000 rows
 
-## Feature Description
+## 💡 Feature Description
 
-### Authentication Flow
+### 🔐 Authentication Flow
 
-1. **Registration**: User fills in username, email, password. Auto-login after successful registration
-2. **Login**: Login with username/password. Server creates Session and returns token
-3. **Authentication**: All API requests carry token. Server verifies user identity
-4. **Logout**: Clear server-side Session and client-side state
+1. **📝 Registration**: User fills in username, email, password. Auto-login after successful registration
+2. **🔐 Login**: Login with username/password. Server creates Session and returns token
+3. **🔒 Authentication**: All API requests carry token. Server verifies user identity
+4. **👋 Logout**: Clear server-side Session and client-side state
 
-### Data Isolation
+### 🛡️ Data Isolation
 
 - Each user can only access their own uploaded files
 - File upload automatically associates with current user ID
 - All API requests verify user permissions
 - Image download also verifies file ownership
 
-### Table Display
+### 🎨 Table Display
 
-- **Full-Screen Display**: Click a file to enter full-screen data view
-- **Zebra Stripes**: Alternating row colors (white/light gray)
-- **Hover Highlight**: Hovering row becomes light blue
-- **Column Letters**: Each column shows Excel-style column letters (A, B, C, ..., AA, AB)
-- **Fixed Row Numbers**: Row number column fixed on the left
-- **Fixed Header**: Header row fixed at the top
+- **🖥️ Full-Screen Display**: Click a file to enter full-screen data view
+- **🎭 Zebra Stripes**: Alternating row colors with gradient effects
+- **✨ Hover Highlight**: Hovering row with shadow and animation effects
+- **📊 Column Letters**: Each column shows Excel-style column letters (A, B, C, ..., AA, AB)
+- **🔢 Fixed Row Numbers**: Row number column fixed on the left with gradient background
+- **📑 Fixed Header**: Header row fixed at the top with gradient background
 
-### Merged Cells
+### 🌈 Merged Cells
 
 - Automatically parsed when uploading
 - Frontend uses native HTML table colspan/rowspan for correct rendering
-- Merged cells highlighted with light yellow background
+- Merged cells highlighted with gradient background and floating animation
 
-### Embedded Images
+### 🖼️ Embedded Images
 
 - Support for images embedded in .xlsx format
 - Images stored in database, retrieved via API
 - Frontend displays image thumbnails with preview on click
 - Shows image anchor position in Excel (e.g., A1, B5)
 
-### Embedded Charts
+### 📈 Embedded Charts
 
 - Recognize common chart types: bar, line, pie, area, scatter, etc.
 - Display chart title and anchor position
 - Note: Currently shows chart metadata only, no visual rendering
 
-### Multiple Table Regions
+### 🗂️ Multiple Table Regions
 
 - Auto-detect multiple tables separated by empty rows in a single Sheet
 - Toolbar displays table region selector
 - Choose to view all data or specific table region
 - Table name automatically extracted from first row's first non-empty cell
 
-## Notes
+## ⚠️ Notes
 
 - `.xls` format image and chart extraction not yet supported (xlrd library limitation)
 - Charts currently show metadata only, no visual rendering
@@ -301,13 +313,26 @@ docker-compose down -v
 - All API requests require user authentication
 - Re-login required after Session expiration
 
-## Security Notes
+## 🔒 Security Notes
 
 - Passwords encrypted with bcrypt
 - Session ID generated using cryptographically secure random string
 - Complete data isolation between users
 - Recommended to change SESSION_SECRET in production environment
 
-## License
+## 📜 License
 
 MIT License
+
+---
+
+<div align="center">
+  <p>
+    Made with ❤️ by Excel 管理专家团队
+  </p>
+  <p>
+    <a href="#quick-start">🚀 Quick Start</a> •
+    <a href="#features">✨ Features</a> •
+    <a href="#api-endpoints">🔌 API</a>
+  </p>
+</div>
