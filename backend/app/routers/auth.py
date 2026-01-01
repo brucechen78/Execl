@@ -8,7 +8,7 @@ from starlette.requests import Request
 from ..database import get_db
 from .. import crud, models, schemas
 from ..config import SESSION_EXPIRE_HOURS, PASSWORD_MIN_LENGTH
-from .auth import (
+from ..auth import (
     hash_password,
     verify_password,
     create_session_id,
