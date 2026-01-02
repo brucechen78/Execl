@@ -19,10 +19,3 @@ export const logout = () => {
 export const getCurrentUser = () => {
   return api.get('/auth/me')
 }
-
-export default {
-  register,
-  login,
-  logout,
-  getCurrentUser
-}

@@ -13,7 +13,7 @@ from openpyxl.chart import BarChart, LineChart, PieChart, AreaChart, ScatterChar
 import xlrd
 
 from ..database import get_db
-from ..config import MAX_FILE_SIZE, ALLOWED_EXTENSIONS
+from ..config import MAX_FILE_SIZE, ALLOWED_EXTENSIONS, MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE, MAX_LIST_LIMIT
 from .. import crud, schemas, models
 from ..auth import get_current_user
 
@@ -420,7 +420,7 @@ async def upload_file(
 @router.get("/files", response_model=schemas.FileListResponse)
 def get_files(
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=MAX_LIST_LIMIT),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -450,7 +450,7 @@ def get_sheet_data(
     file_id: int,
     sheet_id: int,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=50000),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
