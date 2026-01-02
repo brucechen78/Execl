@@ -130,7 +130,7 @@
 cd Execl
 
 # 启动所有服务
-docker-compose up -d --build
+docker compose up -d --build
 
 # 执行数据库迁移（添加用户认证相关表）
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
@@ -142,10 +142,10 @@ docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migra
 
 ```bash
 # 查看服务状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 ```
 
 所有服务状态应为 `running`：
@@ -180,10 +180,10 @@ excel-frontend   running
 
 ```bash
 # 停止服务（保留数据）
-docker-compose down
+docker compose down
 
 # 停止服务并删除数据卷
-docker-compose down -v
+docker compose down -v
 ```
 
 ## 🔌 API 接口

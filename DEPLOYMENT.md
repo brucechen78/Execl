@@ -47,14 +47,14 @@
 
 ```bash
 docker --version
-docker-compose --version
+docker compose version
 ```
 
 ### 🚀 2. 启动服务
 
 ```bash
 cd Execl
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 🎉 首次启动需要构建镜像，请耐心等待几分钟。
@@ -78,10 +78,10 @@ docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migra
 
 ```bash
 # 查看服务状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 ```
 
 所有服务状态应为 `running`：
@@ -113,10 +113,10 @@ excel-frontend   running
 
 ```bash
 # 停止服务（保留数据）
-docker-compose down
+docker compose down
 
 # 停止服务并删除数据卷
-docker-compose down -v
+docker compose down -v
 ```
 
 ---
@@ -133,7 +133,7 @@ docker-compose down -v
 cd Execl
 
 # 构建镜像
-docker-compose build
+docker compose build
 
 # 导出镜像
 docker save execl-backend:latest -o execl-backend.tar
@@ -185,7 +185,7 @@ services:
 ### 🚀 5. 启动服务并执行迁移
 
 ```bash
-docker-compose up -d
+docker compose up -d
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
@@ -488,7 +488,7 @@ Can't connect to MySQL server
 ```
 
 **解决方案**：
-- ⏱️ 等待 MySQL 完全启动（查看 `docker-compose logs mysql`）
+- ⏱️ 等待 MySQL 完全启动（查看 `docker compose logs mysql`）
 - 🔍 检查 DATABASE_URL 配置是否正确
 
 ### 🌐 3. 前端无法访问后端 API
@@ -505,14 +505,14 @@ location /api {
 
 - 📏 检查文件大小是否超过 50MB
 - 📄 检查文件格式是否为 .xls 或 .xlsx
-- 📋 查看后端日志：`docker-compose logs backend`
+- 📋 查看后端日志：`docker compose logs backend`
 - 🔐 确认已登录
 
 ### 🔐 5. 登录失败
 
 - ✅ 确认已执行数据库迁移脚本
 - 🔑 检查用户名和密码是否正确
-- 📋 查看后端日志：`docker-compose logs backend`
+- 📋 查看后端日志：`docker compose logs backend`
 
 ### ⏰ 6. Session 过期
 
@@ -542,13 +542,13 @@ location /api {
 ### 📊 10. 分页切换到全部模式失败
 
 - ✅ 确保后端 `page_size` 参数限制已更新为 50000
-- 🔄 重新构建后端镜像：`docker-compose build --no-cache backend`
+- 🔄 重新构建后端镜像：`docker compose build --no-cache backend`
 
 ### 🗑️ 11. 重置所有数据
 
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose down -v
+docker compose up -d --build
 docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migration.sql
 ```
 
@@ -559,21 +559,21 @@ docker exec -i excel-mysql mysql -uroot -ppassword excel_manager < backend/migra
 ### 📊 服务状态
 ```bash
 # 查看所有服务状态
-docker-compose ps
+docker compose ps
 
 # 查看实时日志
-docker-compose logs -f [service_name]
+docker compose logs -f [service_name]
 
 # 重启服务
-docker-compose restart [service_name]
+docker compose restart [service_name]
 
 # 重建并启动单个服务
-docker-compose up -d --build backend
-docker-compose up -d --build frontend
+docker compose up -d --build backend
+docker compose up -d --build frontend
 
 # 重建所有服务（不使用缓存）
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### 🛠️ 容器操作

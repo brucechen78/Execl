@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Skill(glm-plan-usage:usage-query)",
+      "Skill(glm-plan-usage:usage-query-skill)"
     ]
   }
 }
